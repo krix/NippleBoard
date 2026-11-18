@@ -125,6 +125,14 @@ function bindUI() {
   els.grid.addEventListener('dragend', onDragEnd);
   // Touch drag
   els.grid.addEventListener('pointerdown', onPointerDown, { passive: false });
+  // Card spotlight follows the pointer (pure visual, no interference with drag).
+  els.grid.addEventListener('pointermove', (e) => {
+    const card = e.target.closest('.clip-card');
+    if (!card) return;
+    const r = card.getBoundingClientRect();
+    card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+    card.style.setProperty('--my', `${e.clientY - r.top}px`);
+  }, { passive: true });
 }
 
 function detectIOS() {
@@ -274,9 +282,10 @@ function renderGrid() {
   els.grid.innerHTML = '';
   els.emptyState.classList.toggle('hidden', clips.length !== 0);
   const editMode = els.editToggle.checked;
-  for (const clip of clips) {
+  for (const [index, clip] of clips.entries()) {
     const node = els.cardTemplate.content.firstElementChild.cloneNode(true);
     node.dataset.id = clip.id;
+    node.style.setProperty('--i', String(Math.min(index, 20)));
     node.setAttribute('aria-label', `${clip.title} abspielen`);
     node.querySelector('.title').textContent = clip.title || clip.id;
     node.classList.toggle('is-hidden', !!clip.hidden);
