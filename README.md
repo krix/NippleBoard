@@ -8,7 +8,7 @@ Lokale, offlinefähige Progressive Web App im „NippleBoard“-Stil: ein Raster
 - Bearbeiten-Modus: Titel ändern, eigenes Bild hochladen (auf max. 400×400 px skaliert), Frame aus Video wählen, automatisches Vorschaubild zurücksetzen, Buttons ausblenden/einblenden, Reihenfolge per Drag & Drop (Maus & Touch)
 - Persistenz in IndexedDB (Fallback: localStorage mit Hinweis, ohne Bild-Blobs)
 - Export/Import der Einstellungen als JSON (Bilder als Base64)
-- Suche/Filter nach Titel, Lautstärkeregler
+- Suche/Filter nach Titel
 - PWA: installierbar, Offline-Betrieb via Service Worker, Caching-Fortschritt beim ersten Laden der Clips
 
 ## Projektstruktur

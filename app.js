@@ -22,7 +22,6 @@ const els = {
   importFile: document.getElementById('importFile'),
   storageHint: document.getElementById('storageHint'),
   iosHint: document.getElementById('iosHint'),
-  volumeInput: document.getElementById('volumeInput'),
   cacheProgress: document.getElementById('cacheProgress'),
   cacheProgressText: document.getElementById('cacheProgressText'),
   cacheProgressFill: document.getElementById('cacheProgressFill'),
@@ -42,7 +41,7 @@ const els = {
 };
 
 let baseClips = [];
-let state = { version: 1, volume: 1, items: {} };
+let state = { version: 1, items: {} };
 let order = [];
 let currentClipId = null;
 let editingClipId = null;
@@ -80,11 +79,6 @@ function bindUI() {
     document.body.classList.toggle('edit-mode', els.editToggle.checked);
     els.editHint.classList.toggle('hidden', !els.editToggle.checked);
     renderGrid();
-  });
-  els.volumeInput.addEventListener('input', async () => {
-    state.volume = parseFloat(els.volumeInput.value);
-    playbackVideo.volume = state.volume;
-    await saveState();
   });
   els.menuBtn.addEventListener('click', () => {
     const open = els.menuPanel.classList.toggle('hidden');
@@ -189,8 +183,6 @@ async function loadState() {
   } catch (e) {
     console.warn('State laden fehlgeschlagen', e);
   }
-  els.volumeInput.value = String(state.volume ?? 1);
-  playbackVideo.volume = state.volume ?? 1;
 }
 
 async function saveState() {
@@ -372,7 +364,8 @@ function generateAutoThumb(clip) {
     };
     const onLoaded = () => {
       try {
-        const t = Math.min(0.1, Math.max(0, (video.duration || 0) * 0.1));
+        const d = video.duration || 0;
+        const t = (isFinite(d) && d > 0) ? d * 0.5 : 0;
         if (isFinite(t) && t > 0) video.currentTime = t; else onSeeked();
       } catch (e) { onSeeked(); }
     };
@@ -406,7 +399,6 @@ function playClip(id) {
   thumb.innerHTML = '';
   thumb.appendChild(playbackVideo);
   playbackVideo.src = clip.file;
-  playbackVideo.volume = state.volume ?? 1;
   playbackVideo.currentTime = 0;
   currentClipId = id;
   highlightActive();
@@ -697,7 +689,6 @@ async function exportSettings() {
       version: 1,
       exportedAt: new Date().toISOString(),
       order: state.order || order,
-      volume: state.volume,
       items: itemsOut,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -719,7 +710,6 @@ async function handleImportFile() {
     const data = JSON.parse(text);
     if (!data || typeof data !== 'object') throw new Error('Ungültige Datei');
     if (Array.isArray(data.order)) state.order = data.order.filter(x => typeof x === 'string');
-    if (typeof data.volume === 'number') state.volume = Math.min(1, Math.max(0, data.volume));
     const items = data.items && typeof data.items === 'object' ? data.items : {};
     for (const [id, it] of Object.entries(items)) {
       if (!it || typeof it !== 'object') continue;
@@ -743,7 +733,6 @@ async function handleImportFile() {
     await saveState();
     await loadState();
     reconcileState();
-    els.volumeInput.value = String(state.volume ?? 1);
     renderGrid();
     setStatus('Einstellungen importiert.');
   } catch (e) { setStatus('Import fehlgeschlagen: ' + e.message); }

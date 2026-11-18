@@ -42,13 +42,11 @@ body {
 .brand h1 { margin: 0; font-size: 1.35rem; letter-spacing: .02em; color: var(--accent-2); text-shadow: 0 0 18px rgba(255,230,70,.25); }
 .badge { font-size: .75rem; padding: .15rem .5rem; border-radius: 999px; background: #444; color: #fff; }
 .controls { display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; }
-.search-wrap input, .volume-wrap input[type=range] { accent-color: var(--accent); }
+.search-wrap input { accent-color: var(--accent); }
 .search-wrap input {
   background: var(--bg-elev); color: var(--text); border: 1px solid var(--border);
   border-radius: 999px; padding: .45rem .8rem; min-width: 10rem;
 }
-.volume-wrap { display: flex; align-items: center; gap: .4rem; font-size: .85rem; color: var(--muted); }
-.volume-wrap input { width: 7rem; }
 .toggle { display: inline-flex; align-items: center; gap: .4rem; cursor: pointer; font-size: .9rem; }
 .toggle input { accent-color: var(--accent); width: 1.1rem; height: 1.1rem; }
 
