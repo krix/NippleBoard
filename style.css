@@ -59,6 +59,7 @@ body {
 .btn:active { transform: scale(.97); }
 .btn.secondary { background: var(--bg-elev); color: var(--text); border-color: var(--border); }
 .btn.primary { background: var(--accent); color: #fff; }
+.btn.danger { background: var(--danger); color: #fff; }
 .btn:focus-visible, .clip-card:focus-visible, input:focus-visible {
   outline: 3px solid var(--focus); outline-offset: 2px;
 }

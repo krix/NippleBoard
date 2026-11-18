@@ -20,6 +20,7 @@ const els = {
   exportBtn: document.getElementById('exportBtn'),
   importBtn: document.getElementById('importBtn'),
   importFile: document.getElementById('importFile'),
+  resetDataBtn: document.getElementById('resetDataBtn'),
   storageHint: document.getElementById('storageHint'),
   iosHint: document.getElementById('iosHint'),
   cacheProgress: document.getElementById('cacheProgress'),
@@ -87,6 +88,7 @@ function bindUI() {
   els.exportBtn.addEventListener('click', exportSettings);
   els.importBtn.addEventListener('click', () => els.importFile.click());
   els.importFile.addEventListener('change', handleImportFile);
+  els.resetDataBtn.addEventListener('click', resetAppData);
   els.installBtn.addEventListener('click', installApp);
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
@@ -336,14 +338,14 @@ function makeFallback(title) {
 function generateAutoThumb(clip) {
   return new Promise((resolve) => {
     const video = document.createElement('video');
-    video.preload = 'metadata';
+    video.preload = 'auto';
     video.muted = true;
     video.playsInline = true;
-    video.src = clip.file;
     let done = false;
     const finish = (val) => { if (done) return; done = true; cleanup(); resolve(val); };
     const cleanup = () => {
-      video.removeEventListener('loadeddata', onLoaded);
+      video.removeEventListener('loadedmetadata', onMetadata);
+      video.removeEventListener('loadeddata', onData);
       video.removeEventListener('seeked', onSeeked);
       video.removeEventListener('error', onError);
       video.src = '';
@@ -352,8 +354,9 @@ function generateAutoThumb(clip) {
     const onError = () => finish(null);
     const onSeeked = () => {
       try {
+        const w = video.videoWidth || 0, h = video.videoHeight || 0;
+        if (!w || !h) { finish(null); return; }
         const c = document.createElement('canvas');
-        const w = video.videoWidth || 320, h = video.videoHeight || 240;
         const scale = Math.min(1, THUMB_MAX / Math.max(w, h));
         c.width = Math.max(1, Math.round(w * scale));
         c.height = Math.max(1, Math.round(h * scale));
@@ -362,17 +365,33 @@ function generateAutoThumb(clip) {
         finish(c.toDataURL('image/jpeg', 0.82));
       } catch (e) { finish(null); }
     };
-    const onLoaded = () => {
+    const seekToMiddle = () => {
       try {
         const d = video.duration || 0;
         const t = (isFinite(d) && d > 0) ? d * 0.5 : 0;
-        if (isFinite(t) && t > 0) video.currentTime = t; else onSeeked();
+        if (isFinite(t) && t > 0) {
+          if (Math.abs((video.currentTime || 0) - t) < 0.01) onSeeked();
+          else video.currentTime = t;
+        } else {
+          onData();
+        }
       } catch (e) { onSeeked(); }
     };
-    video.addEventListener('loadeddata', onLoaded, { once: true });
+    const onMetadata = () => {
+      // Wait for data so seeking/decoding a middle frame is reliable.
+      if (video.readyState >= 2) seekToMiddle();
+    };
+    const onData = () => {
+      if (done) return;
+      seekToMiddle();
+    };
+    video.addEventListener('loadedmetadata', onMetadata, { once: true });
+    video.addEventListener('loadeddata', onData, { once: true });
     video.addEventListener('seeked', onSeeked, { once: true });
     video.addEventListener('error', onError, { once: true });
-    setTimeout(() => finish(null), 5000);
+    video.src = clip.file;
+    video.load();
+    setTimeout(() => finish(null), 7000);
   });
 }
 
@@ -748,6 +767,41 @@ function dataUrlToBlob(dataUrl) {
   const bytes = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return new Blob([bytes], { type: mime });
+}
+
+/* ---------- Reset ---------- */
+function idbDelete(key) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE, 'readwrite');
+    tx.objectStore(STORE).delete(key);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function resetAppData() {
+  const ok = window.confirm(
+    'App-Daten wirklich zurücksetzen?\n\n' +
+    'Dadurch werden lokal gespeicherte Einstellungen gelöscht (Titel, Reihenfolge, eigene/ausgeblendete Vorschaubilder).\n' +
+    'Clips-Dateien in der App bleiben erhalten. Vorschaubilder werden neu aus der Videomitte erzeugt.'
+  );
+  if (!ok) return;
+  try {
+    stopPlayback();
+    if (db) {
+      await idbDelete(STATE_KEY);
+    }
+    try { localStorage.removeItem(DB_NAME + ':' + STATE_KEY); } catch (_) {}
+    state = { version: 1, items: {} };
+    thumbCache.clear();
+    await loadState();
+    await refreshClips();
+    renderGrid();
+    setStatus('App-Daten zurückgesetzt. Vorschaubilder werden neu erzeugt.');
+  } catch (e) {
+    console.error('Reset fehlgeschlagen', e);
+    setStatus('Zurücksetzen fehlgeschlagen: ' + e.message);
+  }
 }
 
 /* ---------- PWA / Service Worker ---------- */
