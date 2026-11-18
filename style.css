@@ -39,8 +39,9 @@ body {
   display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; justify-content: space-between;
 }
 .brand { display: flex; align-items: center; gap: .5rem; min-width: 0; }
-.brand-mark { margin: 0; display: flex; align-items: center; line-height: 0; }
-.brand-logo { display: block; height: 2.4rem; width: auto; max-width: min(48vw, 220px); object-fit: contain; }
+.brand-mark { margin: 0; display: flex; align-items: center; gap: .45rem; line-height: 1; }
+.brand-logo { display: block; height: 2.4rem; width: auto; max-width: 30vw; object-fit: contain; flex: 0 0 auto; }
+.brand-name { font-size: 1.3rem; font-weight: 700; letter-spacing: .02em; color: var(--accent-2); text-shadow: 0 0 18px rgba(255,230,70,.25); white-space: nowrap; }
 .badge { font-size: .75rem; padding: .15rem .5rem; border-radius: 999px; background: #444; color: #fff; }
 .controls { display: flex; flex-wrap: wrap; gap: .4rem .5rem; align-items: center; flex: 1 1 320px; justify-content: flex-end; }
 .search-wrap { flex: 1 1 10rem; min-width: 0; }
@@ -57,7 +58,8 @@ body {
     padding: calc(.35rem + env(safe-area-inset-top, 0px)) .6rem .35rem;
     gap: .35rem .4rem;
   }
-  .brand-logo { height: 2rem; max-width: 42vw; }
+  .brand-logo { height: 2rem; max-width: 18vw; }
+  .brand-name { font-size: 1.05rem; }
   .controls {
     flex: 1 1 100%;
     justify-content: stretch;
@@ -120,7 +122,9 @@ main { padding: .5rem 1rem 2rem; }
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(255,45,149,.35), var(--shadow);
   grid-column: 1 / -1;
+  order: -1;
   z-index: 5;
+  scroll-margin-top: 8rem;
 }
 .clip-card.is-hidden { opacity: .55; }
 .clip-card .thumb {

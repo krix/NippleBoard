@@ -421,7 +421,7 @@ function playClip(id) {
   playbackVideo.currentTime = 0;
   currentClipId = id;
   highlightActive();
-  try { card.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); } catch (_) {}
+  try { card.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (_) {}
   const p = playbackVideo.play();
   if (p && p.catch) p.catch((err) => {
     console.warn('Playback failed', err);
