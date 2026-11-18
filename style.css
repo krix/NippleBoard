@@ -32,14 +32,15 @@ body {
 
 .topbar {
   position: sticky; top: 0; z-index: 20;
-  background: rgba(20,20,28,.95);
-  backdrop-filter: blur(8px);
+  background: var(--bg);
   border-bottom: 1px solid var(--border);
-  padding: calc(.5rem + env(safe-area-inset-top, 0px)) 1rem .5rem;
+  box-shadow: 0 2px 10px rgba(0,0,0,.35);
+  padding: calc(.45rem + env(safe-area-inset-top, 0px)) 1rem .45rem;
   display: flex; flex-wrap: wrap; gap: .5rem .75rem; align-items: center; justify-content: space-between;
 }
 .brand { display: flex; align-items: center; gap: .5rem; min-width: 0; }
-.brand h1 { margin: 0; font-size: 1.3rem; letter-spacing: .02em; color: var(--accent-2); text-shadow: 0 0 18px rgba(255,230,70,.25); }
+.brand-mark { margin: 0; display: flex; align-items: center; line-height: 0; }
+.brand-logo { display: block; height: 2.4rem; width: auto; max-width: min(48vw, 220px); object-fit: contain; }
 .badge { font-size: .75rem; padding: .15rem .5rem; border-radius: 999px; background: #444; color: #fff; }
 .controls { display: flex; flex-wrap: wrap; gap: .4rem .5rem; align-items: center; flex: 1 1 320px; justify-content: flex-end; }
 .search-wrap { flex: 1 1 10rem; min-width: 0; }
@@ -56,7 +57,7 @@ body {
     padding: calc(.35rem + env(safe-area-inset-top, 0px)) .6rem .35rem;
     gap: .35rem .4rem;
   }
-  .brand h1 { font-size: 1.05rem; }
+  .brand-logo { height: 2rem; max-width: 42vw; }
   .controls {
     flex: 1 1 100%;
     justify-content: stretch;
