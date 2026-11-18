@@ -26,7 +26,9 @@ function main() {
   let existing = [];
   if (fs.existsSync(OUT_FILE)) {
     try {
-      const data = JSON.parse(fs.readFileSync(OUT_FILE, 'utf8'));
+      let text = fs.readFileSync(OUT_FILE, 'utf8');
+      if (text.charCodeAt(0) === 0xfeff) text = text.slice(1);
+      const data = JSON.parse(text);
       if (Array.isArray(data)) existing = data;
     } catch (e) {
       console.warn('Warnung: clips.json konnte nicht gelesen werden:', e.message);

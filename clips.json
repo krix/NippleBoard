@@ -1,8 +1,26 @@
-﻿[
+[
+  {
+    "id": "ab-und-zu",
+    "file": "clips/Ab_und_zu.mp4",
+    "title": "Ab und zu",
+    "image": null
+  },
+  {
+    "id": "crystal-mett",
+    "file": "clips/Crystal_Mett.mp4",
+    "title": "Crystal Mett",
+    "image": null
+  },
   {
     "id": "das-geht-doch-nicht",
     "file": "clips/Das_geht_doch_nicht.mp4",
     "title": "Das geht doch nicht",
+    "image": null
+  },
+  {
+    "id": "das-ist-schoen",
+    "file": "clips/Das_ist_schön.mp4",
+    "title": "Das ist schön",
     "image": null
   },
   {
@@ -18,21 +36,63 @@
     "image": null
   },
   {
-    "id": "denitiv",
-    "file": "clips/Denitiv.mp4",
-    "title": "Denitiv",
+    "id": "dinitiv-zu-viel",
+    "file": "clips/Dinitiv_zu_viel.mp4",
+    "title": "Dinitiv zu viel",
     "image": null
   },
   {
-    "id": "ich-weis-es-nicht",
-    "file": "clips/Ich_weis_es_nicht.mp4",
-    "title": "Ich weis es nicht",
+    "id": "drei",
+    "file": "clips/Drei.mp4",
+    "title": "Drei",
     "image": null
   },
   {
-    "id": "jogi-das-ist-schon",
-    "file": "clips/Jogi......das_ist_schon.mp4",
+    "id": "elf",
+    "file": "clips/ELF.mp4",
+    "title": "ELF",
+    "image": null
+  },
+  {
+    "id": "halt-die-fresse",
+    "file": "clips/Halt_die_Fresse.mp4",
+    "title": "Halt die Fresse",
+    "image": null
+  },
+  {
+    "id": "halts-maul",
+    "file": "clips/Halts_Maul.mp4",
+    "title": "Halts Maul",
+    "image": null
+  },
+  {
+    "id": "ich-weiss-es-nicht",
+    "file": "clips/Ich_weiss_es_nicht.mp4",
+    "title": "Ich weiß es nicht",
+    "image": null
+  },
+  {
+    "id": "isso",
+    "file": "clips/Isso.mp4",
+    "title": "Isso",
+    "image": null
+  },
+  {
+    "id": "ja-tschuess",
+    "file": "clips/Ja_Tschüss.mp4",
+    "title": "Ja Tschüss",
+    "image": null
+  },
+  {
+    "id": "jogi-das-ist-schon-0d-tz6wry-4",
+    "file": "clips/Jogi......das_ist_schon [0D-tZ6Wry_4].mp4",
     "title": "Jogi......das ist schon",
+    "image": null
+  },
+  {
+    "id": "klare-ansage",
+    "file": "clips/Klare_Ansage.mp4",
+    "title": "Klare Ansage",
     "image": null
   },
   {
@@ -42,15 +102,33 @@
     "image": null
   },
   {
-    "id": "nee-hab-ich-nicht",
-    "file": "clips/Nee_hab_ich_nicht.mp4",
-    "title": "Nee hab ich nicht",
+    "id": "ne-hab-ich-nicht",
+    "file": "clips/Ne_hab_ich_nicht.mp4",
+    "title": "Ne hab ich nicht",
+    "image": null
+  },
+  {
+    "id": "sehr-sehr-gut",
+    "file": "clips/Sehr_sehr_gut.mp4",
+    "title": "Sehr sehr gut",
+    "image": null
+  },
+  {
+    "id": "was-denn-los-hier-heute",
+    "file": "clips/Was_denn_los_hier_heute.mp4",
+    "title": "Was denn los hier heute",
     "image": null
   },
   {
     "id": "was-n-los-hier",
     "file": "clips/Was_n_los_hier.mp4",
     "title": "Was n los hier",
+    "image": null
+  },
+  {
+    "id": "wat-wer-bist-du-denn",
+    "file": "clips/Wat_wer_bist_du_denn.mp4",
+    "title": "Wat wer bist du denn",
     "image": null
   }
 ]
