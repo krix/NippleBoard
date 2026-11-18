@@ -26,11 +26,6 @@ const els = {
   cacheProgress: document.getElementById('cacheProgress'),
   cacheProgressText: document.getElementById('cacheProgressText'),
   cacheProgressFill: document.getElementById('cacheProgressFill'),
-  playerOverlay: document.getElementById('playerOverlay'),
-  playerVideo: document.getElementById('playerVideo'),
-  playerTitle: document.getElementById('playerTitle'),
-  closePlayerBtn: document.getElementById('closePlayerBtn'),
-  autoCloseToggle: document.getElementById('autoCloseToggle'),
   editorModal: document.getElementById('editorModal'),
   editorForm: document.getElementById('editorForm'),
   editTitle: document.getElementById('editTitle'),
@@ -47,17 +42,20 @@ const els = {
 };
 
 let baseClips = [];
-let state = { version: 1, volume: 1, autoClose: true, items: {} };
+let state = { version: 1, volume: 1, items: {} };
 let order = [];
-let hiddenSet = new Set();
 let currentClipId = null;
 let editingClipId = null;
 let editingImageBlob = undefined; // undefined = unchanged, null = reset to auto, Blob = custom
 let deferredPrompt = null;
-let dbAvailable = true;
+let db = null;
 let useLocalStorageFallback = false;
-const thumbCache = new Map(); // id -> objectURL or data for auto thumbs
+const thumbCache = new Map(); // id -> data URL for auto thumbs
 let dragState = null;
+const playbackVideo = document.createElement('video');
+playbackVideo.className = 'playback-video';
+playbackVideo.playsInline = true;
+playbackVideo.preload = 'auto';
 
 init();
 
@@ -78,17 +76,14 @@ async function init() {
 function bindUI() {
   els.searchInput.addEventListener('input', renderGrid);
   els.editToggle.addEventListener('change', () => {
+    stopPlayback();
     document.body.classList.toggle('edit-mode', els.editToggle.checked);
     els.editHint.classList.toggle('hidden', !els.editToggle.checked);
     renderGrid();
   });
   els.volumeInput.addEventListener('input', async () => {
     state.volume = parseFloat(els.volumeInput.value);
-    els.playerVideo.volume = state.volume;
-    await saveState();
-  });
-  els.autoCloseToggle.addEventListener('change', async () => {
-    state.autoClose = els.autoCloseToggle.checked;
+    playbackVideo.volume = state.volume;
     await saveState();
   });
   els.menuBtn.addEventListener('click', () => {
@@ -110,16 +105,12 @@ function bindUI() {
     setStatus('App installiert.');
   });
 
-  els.closePlayerBtn.addEventListener('click', closePlayer);
-  els.playerOverlay.addEventListener('click', (e) => { if (e.target === els.playerOverlay) closePlayer(); });
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       if (!els.editorModal.classList.contains('hidden')) closeEditor();
-      else if (!els.playerOverlay.classList.contains('hidden')) closePlayer();
+      else if (currentClipId) stopPlayback();
     }
   });
-  els.playerVideo.addEventListener('ended', () => { if (state.autoClose) closePlayer(); });
-  els.playerVideo.addEventListener('volumechange', () => {});
 
   els.editorForm.addEventListener('submit', onEditorSubmit);
   els.cancelEditBtn.addEventListener('click', closeEditor);
@@ -153,18 +144,16 @@ function setStatus(msg, timeout = 4000) {
 }
 
 /* ---------- Storage (IndexedDB with localStorage fallback) ---------- */
-let db = null;
-
 function openStorage() {
   return new Promise((resolve) => {
-    if (!('indexedDB' in window)) { dbAvailable = false; useLocalStorageFallback = true; resolve(); return; }
+    if (!('indexedDB' in window)) { useLocalStorageFallback = true; resolve(); return; }
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = () => {
       const d = req.result;
       if (!d.objectStoreNames.contains(STORE)) d.createObjectStore(STORE);
     };
     req.onsuccess = () => { db = req.result; resolve(); };
-    req.onerror = () => { dbAvailable = false; useLocalStorageFallback = true; setStatus('IndexedDB nicht verfügbar, nutze localStorage (ohne Bild-Blobs).'); resolve(); };
+    req.onerror = () => { useLocalStorageFallback = true; setStatus('IndexedDB nicht verfügbar, nutze localStorage (ohne Bild-Blobs).'); resolve(); };
   });
 }
 
@@ -194,15 +183,14 @@ async function loadState() {
       if (raw) loaded = JSON.parse(raw);
     }
     if (loaded && typeof loaded === 'object') {
-      state = Object.assign({ version: 1, volume: 1, autoClose: true, items: {} }, loaded);
+      state = Object.assign({ version: 1, volume: 1, items: {} }, loaded);
       if (!state.items || typeof state.items !== 'object') state.items = {};
     }
   } catch (e) {
     console.warn('State laden fehlgeschlagen', e);
   }
   els.volumeInput.value = String(state.volume ?? 1);
-  els.autoCloseToggle.checked = state.autoClose !== false;
-  els.playerVideo.volume = state.volume ?? 1;
+  playbackVideo.volume = state.volume ?? 1;
 }
 
 async function saveState() {
@@ -211,9 +199,11 @@ async function saveState() {
     else if (useLocalStorageFallback) {
       // Blobs can't be stored in localStorage; strip them
       const copy = JSON.parse(JSON.stringify(state, (k, v) => (v instanceof Blob ? undefined : v)));
-      // restore markers for custom images we can't keep
       for (const [id, it] of Object.entries(state.items || {})) {
-        if (it && it.imageBlob instanceof Blob) copy.items[id].imageBlob = null;
+        if (it && it.imageBlob instanceof Blob) {
+          if (!copy.items[id]) copy.items[id] = {};
+          copy.items[id].imageBlob = null;
+        }
       }
       localStorage.setItem(DB_NAME + ':' + STATE_KEY, JSON.stringify(copy));
     }
@@ -233,7 +223,6 @@ async function loadClips() {
     return data.filter(c => c && c.id && c.file);
   } catch (e) {
     console.warn('clips.json laden fehlgeschlagen', e);
-    // try cache fallback via normal fetch
     try {
       const res2 = await fetch(BASE_CLIPS_URL);
       const data = await res2.json();
@@ -251,12 +240,10 @@ async function refreshClips() {
 function reconcileState() {
   const baseIds = baseClips.map(c => c.id);
   const baseSet = new Set(baseIds);
-  // ensure item records exist implicitly; keep saved items even if clip removed? better keep
   let savedOrder = Array.isArray(state.order) ? state.order.filter(id => baseSet.has(id)) : [];
   for (const id of baseIds) if (!savedOrder.includes(id)) savedOrder.push(id);
   order = savedOrder;
   state.order = order;
-  // clean hidden of removed? keep harmless
 }
 
 function getEffectiveClip(id) {
@@ -288,6 +275,7 @@ function visibleClips() {
 
 /* ---------- Rendering ---------- */
 function renderGrid() {
+  if (currentClipId) stopPlayback(false);
   const clips = visibleClips();
   els.grid.innerHTML = '';
   els.emptyState.classList.toggle('hidden', clips.length !== 0);
@@ -297,13 +285,11 @@ function renderGrid() {
     node.dataset.id = clip.id;
     node.setAttribute('aria-label', `${clip.title} abspielen`);
     node.querySelector('.title').textContent = clip.title || clip.id;
-    node.classList.toggle('playing', currentClipId === clip.id);
     node.classList.toggle('is-hidden', !!clip.hidden);
     node.draggable = editMode;
     const thumbEl = node.querySelector('.thumb');
     renderThumb(clip, thumbEl);
     node.addEventListener('click', (e) => onCardClick(e, clip.id));
-    // keyboard is native for button
     els.grid.appendChild(node);
   }
 }
@@ -311,14 +297,12 @@ function renderGrid() {
 async function renderThumb(clip, thumbEl) {
   thumbEl.innerHTML = '';
   const over = state.items[clip.id] || {};
-  // custom image precedence
   if (over.imageBlob instanceof Blob) {
     const url = URL.createObjectURL(over.imageBlob);
     const img = document.createElement('img');
     img.alt = '';
     img.src = url;
     thumbEl.appendChild(img);
-    // release later not critical for small set; could track
     return;
   }
   if (typeof over.imageDataUrl === 'string' && over.imageDataUrl) {
@@ -328,7 +312,6 @@ async function renderThumb(clip, thumbEl) {
     thumbEl.appendChild(img);
     return;
   }
-  // auto thumb cache
   if (thumbCache.has(clip.id)) {
     const val = thumbCache.get(clip.id);
     if (val) {
@@ -339,12 +322,10 @@ async function renderThumb(clip, thumbEl) {
       return;
     }
   }
-  // placeholder first, then try to generate
   thumbEl.appendChild(makeFallback(clip.title));
   generateAutoThumb(clip).then((url) => {
     if (!url) return;
     thumbCache.set(clip.id, url);
-    // re-render thumb if still in DOM for this clip
     const card = els.grid.querySelector(`.clip-card[data-id="${CSS.escape(clip.id)}"] .thumb`);
     if (card) { card.innerHTML = ''; const img = document.createElement('img'); img.alt = ''; img.src = url; card.appendChild(img); }
   }).catch(() => {});
@@ -354,10 +335,9 @@ function makeFallback(title) {
   const d = document.createElement('span');
   d.className = 'thumb-fallback';
   d.textContent = title || 'Clip';
-  // deterministic-ish color
-  let h = 0; for (let i=0;i<(title||'').length;i++) h = (h*31 + title.charCodeAt(i))|0;
+  let h = 0; for (let i = 0; i < (title || '').length; i++) h = (h * 31 + title.charCodeAt(i)) | 0;
   const hue = Math.abs(h) % 360;
-  d.style.background = `linear-gradient(135deg, hsl(${hue} 85% 55%), hsl(${(hue+50)%360} 80% 45%))`;
+  d.style.background = `linear-gradient(135deg, hsl(${hue} 85% 55%), hsl(${(hue + 50) % 360} 80% 45%))`;
   return d;
 }
 
@@ -415,29 +395,46 @@ function onCardClick(e, id) {
 function playClip(id) {
   const clip = getEffectiveClip(id);
   if (!clip) return;
-  if (currentClipId && currentClipId !== id) {
-    els.playerVideo.pause();
+  if (currentClipId === id && !playbackVideo.paused) {
+    stopPlayback();
+    return;
   }
+  stopPlayback(false);
+  const card = els.grid.querySelector(`.clip-card[data-id="${CSS.escape(id)}"]`);
+  const thumb = card && card.querySelector('.thumb');
+  if (!thumb) return;
+  thumb.innerHTML = '';
+  thumb.appendChild(playbackVideo);
+  playbackVideo.src = clip.file;
+  playbackVideo.volume = state.volume ?? 1;
+  playbackVideo.currentTime = 0;
   currentClipId = id;
-  els.playerTitle.textContent = clip.title || clip.id;
-  els.playerVideo.volume = state.volume ?? 1;
-  els.playerVideo.src = clip.file;
-  els.playerOverlay.classList.remove('hidden');
-  const p = els.playerVideo.play();
+  highlightActive();
+  const p = playbackVideo.play();
   if (p && p.catch) p.catch((err) => {
     console.warn('Playback failed', err);
     setStatus('Wiedergabe fehlgeschlagen: ' + (err && err.message ? err.message : 'unbekannt'));
+    stopPlayback();
   });
-  highlightActive();
+  playbackVideo.onended = () => { if (currentClipId === id) stopPlayback(); };
+  playbackVideo.onerror = () => { if (currentClipId === id) { setStatus('Clip konnte nicht abgespielt werden.'); stopPlayback(); } };
 }
 
-function closePlayer() {
-  els.playerVideo.pause();
-  els.playerVideo.removeAttribute('src');
-  els.playerVideo.load();
-  els.playerOverlay.classList.add('hidden');
+function stopPlayback(rerender = true) {
+  const id = currentClipId;
+  playbackVideo.onended = null;
+  playbackVideo.onerror = null;
+  try { playbackVideo.pause(); } catch (_) {}
+  playbackVideo.removeAttribute('src');
+  playbackVideo.load();
+  if (playbackVideo.parentElement) playbackVideo.parentElement.removeChild(playbackVideo);
   currentClipId = null;
   highlightActive();
+  if (rerender && id) {
+    const card = els.grid.querySelector(`.clip-card[data-id="${CSS.escape(id)}"]`);
+    const clip = getEffectiveClip(id);
+    if (card && clip) renderThumb(clip, card.querySelector('.thumb'));
+  }
 }
 
 function highlightActive() {
@@ -448,6 +445,7 @@ function highlightActive() {
 
 /* ---------- Editor ---------- */
 function openEditor(id) {
+  stopPlayback();
   const clip = getEffectiveClip(id);
   if (!clip) return;
   editingClipId = id;
@@ -528,6 +526,7 @@ function resizeImageFile(file, maxW, maxH) {
 function openFramePicker() {
   if (!editingClipId) return;
   const clip = getEffectiveClip(editingClipId);
+  if (!clip) return;
   els.framePicker.classList.remove('hidden');
   els.frameVideo.src = clip.file;
   els.frameVideo.addEventListener('loadedmetadata', () => {
@@ -571,7 +570,6 @@ async function onEditorSubmit(e) {
       item.imageBlob = editingImageBlob;
       delete item.imageDataUrl;
     } else {
-      // fallback: store as dataURL
       item.imageDataUrl = await blobToDataUrl(editingImageBlob);
       item.imageBlob = null;
     }
@@ -648,9 +646,7 @@ function onPointerDown(e) {
   if (!els.editToggle.checked) return;
   const card = e.target.closest('.clip-card');
   if (!card) return;
-  // allow text inputs etc - none inside card
   if (e.pointerType === 'mouse' && e.button !== 0) return;
-  // don't interfere with normal click too much; start drag after move threshold
   const startX = e.clientX, startY = e.clientY;
   let started = false;
   let overId = null;
@@ -702,7 +698,6 @@ async function exportSettings() {
       exportedAt: new Date().toISOString(),
       order: state.order || order,
       volume: state.volume,
-      autoClose: state.autoClose,
       items: itemsOut,
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -725,7 +720,6 @@ async function handleImportFile() {
     if (!data || typeof data !== 'object') throw new Error('Ungültige Datei');
     if (Array.isArray(data.order)) state.order = data.order.filter(x => typeof x === 'string');
     if (typeof data.volume === 'number') state.volume = Math.min(1, Math.max(0, data.volume));
-    if (typeof data.autoClose === 'boolean') state.autoClose = data.autoClose;
     const items = data.items && typeof data.items === 'object' ? data.items : {};
     for (const [id, it] of Object.entries(items)) {
       if (!it || typeof it !== 'object') continue;
@@ -750,7 +744,6 @@ async function handleImportFile() {
     await loadState();
     reconcileState();
     els.volumeInput.value = String(state.volume ?? 1);
-    els.autoCloseToggle.checked = state.autoClose !== false;
     renderGrid();
     setStatus('Einstellungen importiert.');
   } catch (e) { setStatus('Import fehlgeschlagen: ' + e.message); }
@@ -764,7 +757,7 @@ function dataUrlToBlob(dataUrl) {
   const mime = m ? m[1] : 'application/octet-stream';
   const bin = atob(b64);
   const bytes = new Uint8Array(bin.length);
-  for (let i=0;i<bin.length;i++) bytes[i] = bin.charCodeAt(i);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
   return new Blob([bytes], { type: mime });
 }
 
@@ -777,7 +770,6 @@ async function registerServiceWorker() {
   try {
     const reg = await navigator.serviceWorker.register('./sw.js', { scope: './' });
     navigator.serviceWorker.addEventListener('message', onSwMessage);
-    // ask SW to cache current clip list
     if (navigator.serviceWorker.controller) {
       navigator.serviceWorker.controller.postMessage({ type: 'CACHE_CLIPS', clips: baseClips.map(c => c.file) });
     } else {
@@ -836,8 +828,8 @@ async function requestPersistence() {
       if (navigator.storage.estimate) {
         const est = await navigator.storage.estimate();
         if (est && est.quota) {
-          const used = ((est.usage || 0) / (1024*1024)).toFixed(1);
-          const quota = (est.quota / (1024*1024)).toFixed(0);
+          const used = ((est.usage || 0) / (1024 * 1024)).toFixed(1);
+          const quota = (est.quota / (1024 * 1024)).toFixed(0);
           els.storageHint.textContent += ` Belegt ca. ${used} MB von ${quota} MB.`;
         }
       }

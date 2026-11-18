@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'nippleboard-v1';
+const CACHE_VERSION = 'nippleboard-v2';
 const CACHE_NAME = `nippleboard-${CACHE_VERSION}`;
 const APP_SHELL = [
   './',
@@ -8,10 +8,7 @@ const APP_SHELL = [
   './sw.js',
   './manifest.webmanifest',
   './clips.json',
-  './icons/icon-192.svg',
-  './icons/icon-512.svg',
-  './icons/icon-192.png',
-  './icons/icon-512.png'
+  './icons/logo.png'
 ];
 
 self.addEventListener('install', (event) => {

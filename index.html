@@ -8,8 +8,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>NippleBoard</title>
   <link rel="manifest" href="./manifest.webmanifest">
-  <link rel="icon" href="./icons/icon-192.svg" type="image/svg+xml">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="icon" href="./icons/logo.png" type="image/png">
+  <link rel="apple-touch-icon" href="./icons/logo.png">
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -57,15 +57,6 @@
     <div id="grid" class="grid" aria-label="Clip-Raster"></div>
     <p id="emptyState" class="empty hidden">Keine Clips gefunden.</p>
   </main>
-
-  <div id="playerOverlay" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Videoplayer">
-    <div class="overlay-inner">
-      <button id="closePlayerBtn" type="button" class="btn close-btn" aria-label="Schließen">✕</button>
-      <div class="player-title" id="playerTitle"></div>
-      <video id="playerVideo" controls playsinline></video>
-      <label class="toggle overlay-toggle"><input id="autoCloseToggle" type="checkbox" checked> <span>Am Ende automatisch schließen</span></label>
-    </div>
-  </div>
 
   <div id="editorModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editorHeading">
     <div class="modal-inner">
