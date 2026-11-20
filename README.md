@@ -4,7 +4,7 @@ Lokale, offlinefähige Progressive Web App im „TV Total NippleBoard“-Stil: e
 
 ## Funktionen
 - Responsives Button-Raster mit großen Touch-Zielen
-- Wiedergabe direkt im geklickten Button (ohne Overlay, ohne Videosteuerung/Pause/Vor-zurück); Tippen während der Wiedergabe oder `ESC` stoppt den Clip, am Ende wird das Vorschaubild wiederhergestellt
+- Wiedergabe als zentriertes Overlay in der Bildschirmmitte (ohne Videosteuerung/Pause/Vor-zurück); Tippen auf das Overlay oder `ESC` stoppt den Clip, danach erscheint das Raster wieder an der ursprünglichen Scrollposition
 - Bearbeiten-Modus: Titel ändern, eigenes Bild hochladen (auf max. 400×400 px skaliert), Frame aus Video wählen, automatisches Vorschaubild zurücksetzen, Buttons ausblenden/einblenden, Reihenfolge per Drag & Drop (Maus & Touch)
 - Persistenz in IndexedDB (Fallback: localStorage mit Hinweis, ohne Bild-Blobs)
 - Export/Import der Einstellungen als JSON (Bilder als Base64)
@@ -76,7 +76,7 @@ Im Projekt sind bereits reale Clip-Dateien in `clips/` vorhanden und in `clips.j
 1. **Erststart online:** Server starten, `http://localhost:8000` öffnen. Warten, bis „Lade Clips für Offline-Nutzung: x/y“ abgeschlossen ist.
 2. **Service Worker prüfen:** DevTools → Application → Service Workers: Worker aktiv/kontrollierend; Application → Cache Storage: `nippleboard-…` enthält App-Shell und Dateien aus `clips/`.
 3. **Offline simulieren:** DevTools → Network → „Offline“ aktivieren **oder** Flugmodus einschalten. Seite neu laden (F5) – App sollte vollständig laden.
-4. **Wiedergabe offline:** Mehrere Clips antippen; Wiedergabe im Button testen (Range-Requests aus Cache).
+4. **Wiedergabe offline:** Mehrere Clips antippen; Wiedergabe im zentrierten Overlay testen (Range-Requests aus Cache).
 5. **clips.json-Fallback:** Bei Offline sollte die zuletzt gecachte `clips.json` verwendet werden.
 6. **Persistenz:** Titel/Bild/Reihenfolge ändern, Seite neu laden (weiterhin offline) – Änderungen müssen erhalten bleiben.
 7. **Installation:** App installieren, Server beenden/Offline gehen, installierte App starten – Funktion wie oben.

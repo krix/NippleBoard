@@ -59,6 +59,16 @@
     <p id="emptyState" class="empty hidden">Keine Clips gefunden.</p>
   </main>
 
+  <div id="playerOverlay" class="player-overlay hidden" role="dialog" aria-modal="true" aria-label="Clip">
+    <div class="player-shell">
+      <div id="playerMedia" class="player-media"></div>
+      <div class="player-caption">
+        <span id="playerTitle" class="player-title"></span>
+        <span class="player-hint">Tippen oder ESC zum Schließen</span>
+      </div>
+    </div>
+  </div>
+
   <div id="editorModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="editorHeading">
     <div class="modal-inner">
       <h2 id="editorHeading">Button bearbeiten</h2>

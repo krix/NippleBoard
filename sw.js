@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'nippleboard-v10';
+const CACHE_VERSION = 'nippleboard-v11';
 const CACHE_NAME = `nippleboard-${CACHE_VERSION}`;
 const APP_SHELL = [
   './',

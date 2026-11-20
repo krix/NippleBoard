@@ -26,6 +26,9 @@ const els = {
   cacheProgress: document.getElementById('cacheProgress'),
   cacheProgressText: document.getElementById('cacheProgressText'),
   cacheProgressFill: document.getElementById('cacheProgressFill'),
+  playerOverlay: document.getElementById('playerOverlay'),
+  playerMedia: document.getElementById('playerMedia'),
+  playerTitle: document.getElementById('playerTitle'),
   editorModal: document.getElementById('editorModal'),
   editorForm: document.getElementById('editorForm'),
   editTitle: document.getElementById('editTitle'),
@@ -45,7 +48,6 @@ let baseClips = [];
 let state = { version: 1, items: {} };
 let order = [];
 let currentClipId = null;
-let playbackScrollY = null; // Scrollposition vor dem Abspielen, damit danach zurückgescrollt wird
 let editingClipId = null;
 let editingImageBlob = undefined; // undefined = unchanged, null = reset to auto, Blob = custom
 let deferredPrompt = null;
@@ -54,7 +56,7 @@ let useLocalStorageFallback = false;
 const thumbCache = new Map(); // id -> data URL for auto thumbs
 let dragState = null;
 const playbackVideo = document.createElement('video');
-playbackVideo.className = 'playback-video';
+playbackVideo.className = 'player-video';
 playbackVideo.playsInline = true;
 playbackVideo.preload = 'auto';
 
@@ -107,6 +109,9 @@ function bindUI() {
       if (!els.editorModal.classList.contains('hidden')) closeEditor();
       else if (currentClipId) stopPlayback();
     }
+  });
+  els.playerOverlay.addEventListener('click', () => {
+    if (currentClipId) stopPlayback();
   });
 
   els.editorForm.addEventListener('submit', onEditorSubmit);
@@ -421,20 +426,16 @@ function playClip(id) {
     stopPlayback();
     return;
   }
-  // Beim Clip-Wechsel die bereits gemerkte Originalposition beibehalten.
-  const scrollY = (currentClipId && playbackScrollY !== null) ? playbackScrollY : window.scrollY;
   stopPlayback(false);
-  const card = els.grid.querySelector(`.clip-card[data-id="${CSS.escape(id)}"]`);
-  const thumb = card && card.querySelector('.thumb');
-  if (!thumb) return;
-  thumb.innerHTML = '';
-  thumb.appendChild(playbackVideo);
+  els.playerMedia.innerHTML = '';
+  els.playerMedia.appendChild(playbackVideo);
+  els.playerTitle.textContent = clip.title || clip.id;
+  els.playerOverlay.setAttribute('aria-label', `${clip.title || clip.id} abspielen`);
+  els.playerOverlay.classList.remove('hidden');
   playbackVideo.src = clip.file;
   playbackVideo.currentTime = 0;
   currentClipId = id;
-  playbackScrollY = scrollY;
   highlightActive();
-  try { card.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (_) {}
   const p = playbackVideo.play();
   if (p && p.catch) p.catch((err) => {
     console.warn('Playback failed', err);
@@ -453,13 +454,9 @@ function stopPlayback(rerender = true) {
   playbackVideo.removeAttribute('src');
   playbackVideo.load();
   if (playbackVideo.parentElement) playbackVideo.parentElement.removeChild(playbackVideo);
+  els.playerOverlay.classList.add('hidden');
   currentClipId = null;
   highlightActive();
-  if (playbackScrollY !== null) {
-    const y = playbackScrollY;
-    playbackScrollY = null;
-    try { window.scrollTo({ top: y, behavior: 'auto' }); } catch (_) { window.scrollTo(0, y); }
-  }
   if (rerender && id) {
     const card = els.grid.querySelector(`.clip-card[data-id="${CSS.escape(id)}"]`);
     const clip = getEffectiveClip(id);
