@@ -175,7 +175,7 @@ body::after {
     gap: .35rem .45rem;
   }
   .brand-logo { height: 2.1rem; max-width: 19vw; }
-  .brand-name { font-size: 1.05rem; }
+  .brand-name { font-size: .95rem; }
   .controls { flex: 1 1 100%; justify-content: stretch; gap: .35rem .4rem; }
   .search-wrap { flex: 1 1 7rem; }
   .search-wrap input { padding: .38rem .7rem .38rem 2rem; font-size: 16px; }

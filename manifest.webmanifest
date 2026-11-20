@@ -1,7 +1,7 @@
 {
-  "name": "NippleBoard",
-  "short_name": "NippleBoard",
-  "description": "Soundboard im NippleBoard-Stil mit Videoclips",
+  "name": "TV Total NippleBoard",
+  "short_name": "TV Total NippleBoard",
+  "description": "Soundboard im TV Total NippleBoard-Stil mit Videoclips",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

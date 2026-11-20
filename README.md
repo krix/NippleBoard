@@ -1,6 +1,6 @@
-# NippleBoard (PWA)
+# TV Total NippleBoard (PWA)
 
-Lokale, offlinefähige Progressive Web App im „NippleBoard“-Stil: ein Raster aus Buttons mit Vorschaubild und Titel, das beim Tippen kurze Videoclips abspielt.
+Lokale, offlinefähige Progressive Web App im „TV Total NippleBoard“-Stil: ein Raster aus Buttons mit Vorschaubild und Titel, das beim Tippen kurze Videoclips abspielt.
 
 ## Funktionen
 - Responsives Button-Raster mit großen Touch-Zielen
