@@ -45,6 +45,7 @@ let baseClips = [];
 let state = { version: 1, items: {} };
 let order = [];
 let currentClipId = null;
+let playbackScrollY = null; // Scrollposition vor dem Abspielen, damit danach zurückgescrollt wird
 let editingClipId = null;
 let editingImageBlob = undefined; // undefined = unchanged, null = reset to auto, Blob = custom
 let deferredPrompt = null;
@@ -420,6 +421,8 @@ function playClip(id) {
     stopPlayback();
     return;
   }
+  // Beim Clip-Wechsel die bereits gemerkte Originalposition beibehalten.
+  const scrollY = (currentClipId && playbackScrollY !== null) ? playbackScrollY : window.scrollY;
   stopPlayback(false);
   const card = els.grid.querySelector(`.clip-card[data-id="${CSS.escape(id)}"]`);
   const thumb = card && card.querySelector('.thumb');
@@ -429,6 +432,7 @@ function playClip(id) {
   playbackVideo.src = clip.file;
   playbackVideo.currentTime = 0;
   currentClipId = id;
+  playbackScrollY = scrollY;
   highlightActive();
   try { card.scrollIntoView({ block: 'start', behavior: 'smooth' }); } catch (_) {}
   const p = playbackVideo.play();
@@ -451,6 +455,11 @@ function stopPlayback(rerender = true) {
   if (playbackVideo.parentElement) playbackVideo.parentElement.removeChild(playbackVideo);
   currentClipId = null;
   highlightActive();
+  if (playbackScrollY !== null) {
+    const y = playbackScrollY;
+    playbackScrollY = null;
+    try { window.scrollTo({ top: y, behavior: 'auto' }); } catch (_) { window.scrollTo(0, y); }
+  }
   if (rerender && id) {
     const card = els.grid.querySelector(`.clip-card[data-id="${CSS.escape(id)}"]`);
     const clip = getEffectiveClip(id);
