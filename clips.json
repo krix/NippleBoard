@@ -12,6 +12,12 @@
     "image": null
   },
   {
+    "id": "das-crazy",
+    "file": "clips/Das_Crazy.mp4",
+    "title": "Das Crazy",
+    "image": null
+  },
+  {
     "id": "das-geht-doch-nicht",
     "file": "clips/Das_geht_doch_nicht.mp4",
     "title": "Das geht doch nicht",
@@ -108,6 +114,12 @@
     "image": null
   },
   {
+    "id": "sie-konnen-es-nicht",
+    "file": "clips/Sie_konnen_es_nicht.mp4",
+    "title": "Sie konnen es nicht",
+    "image": null
+  },
+  {
     "id": "was-denn-los-hier-heute",
     "file": "clips/Was_denn_los_hier_heute.mp4",
     "title": "Was denn los hier heute",
@@ -123,6 +135,12 @@
     "id": "wat-wer-bist-du-denn",
     "file": "clips/Wat_wer_bist_du_denn.mp4",
     "title": "Wat wer bist du denn",
+    "image": null
+  },
+  {
+    "id": "ziemlich-nicht-ganz-gut",
+    "file": "clips/Ziemlich_nicht_ganz_gut.mp4",
+    "title": "Ziemlich nicht ganz gut",
     "image": null
   }
 ]
